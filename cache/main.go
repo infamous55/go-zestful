@@ -33,6 +33,20 @@ const (
 	LFU EvictionPolicy = "LFU"
 )
 
+func (ep *EvictionPolicy) Set(value string) error {
+	switch value {
+	case "LRU", "LFU":
+		*ep = EvictionPolicy(value)
+		return nil
+	default:
+		return fmt.Errorf("parse error")
+	}
+}
+
+func (ep *EvictionPolicy) String() string {
+	return string(*ep)
+}
+
 func New(evictionPolicy EvictionPolicy, capacity uint64) (cache Cache, err error) {
 	switch {
 	case evictionPolicy == LRU:
@@ -54,6 +68,6 @@ func New(evictionPolicy EvictionPolicy, capacity uint64) (cache Cache, err error
 			items:         make(map[string]*LFUCacheItem),
 		}, nil
 	default:
-		return nil, fmt.Errorf("invalid eviction policy")
+		return nil, fmt.Errorf("invalid value \"%v\" for eviction policy", evictionPolicy)
 	}
 }
