@@ -19,12 +19,12 @@ func main() {
 
 	if capacity == 0 || evictionPolicy == "" {
 		flag.Usage()
-		return
+		os.Exit(2)
 	}
 
 	_, err := cache.New(evictionPolicy, capacity)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v: initialization error\n", err)
-		os.Exit(1)
+		os.Exit(2)
 	}
 }
