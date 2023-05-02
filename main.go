@@ -1,25 +1,43 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
-	cache "github.com/infamous55/go-zestful/cache"
+	"github.com/infamous55/go-zestful/cache"
 )
+
+type portNumber uint16
+
+func (p *portNumber) Set(value string) error {
+	result, err := strconv.ParseUint(value, 10, 64)
+	if err != nil || result > 65535 {
+		return fmt.Errorf("parse error")
+	}
+	*p = portNumber(result)
+	return nil
+}
+
+func (p *portNumber) String() string {
+	return fmt.Sprint(*p)
+}
 
 func main() {
 	var capacity uint64
 	var evictionPolicy cache.EvictionPolicy
+	var port portNumber
 
 	flag.Uint64Var(&capacity, "capacity", 0, "set the capacity of the cache")
 	flag.Var(&evictionPolicy, "eviction-policy", "set the eviction policy of the cache (LRU or LFU)")
+	flag.Var(&port, "port", "set the port number for the web server")
 
 	flag.Parse()
 
-	if capacity == 0 || evictionPolicy == "" {
+	if capacity == 0 || evictionPolicy == "" || port == 0 {
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -29,45 +47,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v: initialization error\n", err)
 		os.Exit(2)
 	}
+	go newCache.DeleteExpired(5 * time.Minute)
 
-	injectCache := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				ctx := context.WithValue(r.Context(), "cache", newCache)
-				next.ServeHTTP(w, r.WithContext(ctx))
-			},
-		)
-	}
-
-	http.Handle("/test", injectCache(http.HandlerFunc(testHandler)))
-	http.Handle("/test2", injectCache(http.HandlerFunc(test2Handler)))
-	http.ListenAndServe(":8080", nil)
-}
-
-func getCache(ctx context.Context) cache.Cache {
-	if cache, ok := ctx.Value("cache").(cache.Cache); ok {
-		return cache
-	}
-	return nil
-}
-
-func testHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	cache := getCache(ctx)
-	cache.Set("hello", "world")
-	value, err := cache.Get("hello")
-	if err != nil {
-		fmt.Fprint(w, err)
-	}
-	fmt.Fprint(w, value)
-}
-
-func test2Handler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	cache := getCache(ctx)
-	value, err := cache.Get("hello")
-	if err != nil {
-		fmt.Fprint(w, err)
-	}
-	fmt.Fprint(w, value)
+	address := fmt.Sprintf(":%v", port)
+	http.ListenAndServe(address, nil)
 }
