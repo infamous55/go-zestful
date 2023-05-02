@@ -47,7 +47,7 @@ func (ep *EvictionPolicy) String() string {
 	return string(*ep)
 }
 
-func New(evictionPolicy EvictionPolicy, capacity uint64) (cache Cache, err error) {
+func New(capacity uint64, evictionPolicy EvictionPolicy) (cache Cache, err error) {
 	switch {
 	case evictionPolicy == LRU:
 		return &LRUCache{

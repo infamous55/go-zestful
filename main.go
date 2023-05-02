@@ -24,7 +24,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	newCache, err := cache.New(evictionPolicy, capacity)
+	newCache, err := cache.New(capacity, evictionPolicy)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v: initialization error\n", err)
 		os.Exit(2)
@@ -40,6 +40,7 @@ func main() {
 	}
 
 	http.Handle("/test", injectCache(http.HandlerFunc(testHandler)))
+	http.Handle("/test2", injectCache(http.HandlerFunc(test2Handler)))
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -54,6 +55,16 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cache := getCache(ctx)
 	cache.Set("hello", "world")
+	value, err := cache.Get("hello")
+	if err != nil {
+		fmt.Fprint(w, err)
+	}
+	fmt.Fprint(w, value)
+}
+
+func test2Handler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	cache := getCache(ctx)
 	value, err := cache.Get("hello")
 	if err != nil {
 		fmt.Fprint(w, err)
