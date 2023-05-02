@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/infamous55/go-zestful/api"
 	"github.com/infamous55/go-zestful/cache"
 )
 
@@ -49,6 +50,10 @@ func main() {
 	}
 	go newCache.DeleteExpired(5 * time.Minute)
 
+	cacheMiddleware := api.GenerateCacheMiddleware(newCache)
+	router := api.Router
+	router.Use(cacheMiddleware)
+
 	address := fmt.Sprintf(":%v", port)
-	http.ListenAndServe(address, nil)
+	http.ListenAndServe(address, router)
 }
