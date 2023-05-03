@@ -30,10 +30,12 @@ func (p *portNumber) String() string {
 func main() {
 	var capacity uint64
 	var evictionPolicy cache.EvictionPolicy
+	var defaultTtl cache.TimeToLive
 	var port portNumber
 
 	flag.Uint64Var(&capacity, "capacity", 0, "set the capacity of the cache")
 	flag.Var(&evictionPolicy, "eviction-policy", "set the eviction policy of the cache (LRU or LFU)")
+	flag.Var(&defaultTtl, "default-ttl", "set the default time-to-live")
 	flag.Var(&port, "port", "set the port number for the web server")
 
 	flag.Parse()
@@ -43,7 +45,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	newCache, err := cache.New(capacity, evictionPolicy)
+	newCache, err := cache.New(capacity, evictionPolicy, defaultTtl)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v: initialization error\n", err)
 		os.Exit(2)

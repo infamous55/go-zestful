@@ -33,6 +33,8 @@ func (c *LRUCache) Set(key string, value interface{}, timeToLive ...time.Duratio
 
 	if len(timeToLive) == 1 && timeToLive[0] != 0 {
 		item.expirationTime = time.Now().Add(timeToLive[0])
+	} else if c.defaultTtl != 0 {
+		item.expirationTime = time.Now().Add(time.Duration(c.defaultTtl))
 	} else {
 		item.expirationTime = time.Time{}
 	}
