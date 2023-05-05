@@ -33,7 +33,7 @@ func GenerateAuthMiddleware(key []byte) func(next http.Handler) http.Handler {
 
 				tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 				_, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-					if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
+					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 						return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 					}
 					return key, nil

@@ -70,13 +70,13 @@ func main() {
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	keyValue := randomString(32)
 
-	api.AddItemsRoutes(itemsRouter)
+	api.RegisterItemsHandlers(itemsRouter)
 	authMiddleware := api.GenerateAuthMiddleware([]byte(keyValue))
 	cacheMiddleware := api.GenerateCacheMiddleware(newCache)
 	itemsRouter.Use(cacheMiddleware)
 	itemsRouter.Use(authMiddleware)
 
-	api.AddAuthRoutes(authRouter, secret, []byte(keyValue))
+	api.RegisterAuthHandlers(authRouter, secret, []byte(keyValue))
 
 	address := fmt.Sprintf(":%v", port)
 	http.ListenAndServe(address, router)

@@ -38,10 +38,11 @@ func createTokenHandler(secret string, key []byte) func(w http.ResponseWriter, r
 		claims := &jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(20 * time.Minute)),
 		}
-		token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 		signedToken, err := token.SignedString(key)
 		if err != nil {
 			jsonError(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		// cookie := http.Cookie{
@@ -71,7 +72,7 @@ func refreshTokenHandler(secret string, key []byte) func(w http.ResponseWriter, 
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return key, nil
@@ -84,15 +85,17 @@ func refreshTokenHandler(secret string, key []byte) func(w http.ResponseWriter, 
 		if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok {
 			if time.Until(claims.ExpiresAt.Time) > 2*time.Minute {
 				jsonError(w, "refresh attempt too early", http.StatusBadRequest)
+				return
 			}
 
 			newClaims := &jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(20 * time.Minute)),
 			}
-			newToken := jwt.NewWithClaims(jwt.SigningMethodES256, newClaims)
+			newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
 			newSignedToken, err := newToken.SignedString(key)
 			if err != nil {
 				jsonError(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
 
 			response := map[string]string{"token": newSignedToken}
