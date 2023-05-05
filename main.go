@@ -65,18 +65,18 @@ func main() {
 	}
 	go newCache.DeleteExpired(5 * time.Minute)
 
+	router := mux.NewRouter()
+	itemsRouter := router.PathPrefix("/items").Subrouter()
+	authRouter := router.PathPrefix("/auth").Subrouter()
 	keyValue := randomString(32)
-	authRouter := api.NewAuthRouter(secret, []byte(keyValue))
 
-	itemsRouter := api.NewItemsRouter()
+	api.AddItemsRoutes(itemsRouter)
 	authMiddleware := api.GenerateAuthMiddleware([]byte(keyValue))
 	cacheMiddleware := api.GenerateCacheMiddleware(newCache)
-	itemsRouter.Use(authMiddleware)
 	itemsRouter.Use(cacheMiddleware)
+	itemsRouter.Use(authMiddleware)
 
-	router := mux.NewRouter()
-	router.PathPrefix("/auth").Handler(authRouter)
-	router.PathPrefix("/items").Handler(itemsRouter)
+	api.AddItemsRoutes(authRouter)
 
 	address := fmt.Sprintf(":%v", port)
 	http.ListenAndServe(address, router)
