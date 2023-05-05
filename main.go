@@ -76,7 +76,7 @@ func main() {
 	itemsRouter.Use(cacheMiddleware)
 	itemsRouter.Use(authMiddleware)
 
-	api.AddItemsRoutes(authRouter)
+	api.AddAuthRoutes(authRouter, secret, []byte(keyValue))
 
 	address := fmt.Sprintf(":%v", port)
 	http.ListenAndServe(address, router)
