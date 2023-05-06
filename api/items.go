@@ -30,7 +30,8 @@ func getItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonBytes, err := json.Marshal(value)
+	response := map[string]interface{}{"value": value}
+	jsonBytes, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -64,6 +65,16 @@ func createItemHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &newItem)
 	if err != nil {
 		jsonError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if newItem.Key == "" {
+		jsonError(w, "invalid key", http.StatusBadRequest)
+		return
+	}
+
+	if newItem.Value == nil {
+		jsonError(w, "invalid value", http.StatusBadRequest)
 		return
 	}
 
@@ -124,6 +135,11 @@ func updateItemHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &updatedItem)
 	if err != nil {
 		jsonError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if updatedItem.Value == nil {
+		jsonError(w, "invalid value", http.StatusBadRequest)
 		return
 	}
 
