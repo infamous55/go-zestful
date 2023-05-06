@@ -38,6 +38,10 @@ func (c *LFUCache) Set(key string, value interface{}, timeToLive ...time.Duratio
 		c.items[key] = item
 		c.size++
 
+		if c.frequencyList.Len() == 0 {
+			c.frequencyList.PushBack(&FrequencyListItem{})
+		}
+
 		frequencyListBackElement := c.frequencyList.Back()
 		frequencyListItem := frequencyListBackElement.Value.(*FrequencyListItem)
 		if frequencyListItem == nil {
@@ -46,6 +50,10 @@ func (c *LFUCache) Set(key string, value interface{}, timeToLive ...time.Duratio
 			newFrequencyListItem := &FrequencyListItem{value: 0}
 			frequencyListBackElement = c.frequencyList.PushBack(newFrequencyListItem)
 			frequencyListItem = newFrequencyListItem
+		}
+
+		if frequencyListItem.associatedItems == nil {
+			frequencyListItem.associatedItems = make(map[string]struct{})
 		}
 
 		frequencyListItem.associatedItems[key] = struct{}{}
@@ -76,21 +84,17 @@ func (c *LFUCache) removeBackItems() {
 }
 
 func (c *LFUCache) Get(key string) (value interface{}, err error) {
-	c.RLock()
-	defer c.RUnlock()
+	c.Lock()
+	defer c.Unlock()
 
 	if item, ok := c.items[key]; ok {
 		if !item.expirationTime.IsZero() && time.Now().After(item.expirationTime) {
-			c.Lock()
 			c.removeCacheItem(item, key)
-			c.Unlock()
 
 			return nil, fmt.Errorf("item does not exist")
 		}
 
-		c.Lock()
 		c.incrementItemFrequency(item, key)
-		c.Unlock()
 
 		return item.value, nil
 	} else {
@@ -116,11 +120,17 @@ func (c *LFUCache) incrementItemFrequency(item *LFUCacheItem, key string) {
 	currentFrequencyListItem := currentFrequencyListElement.Value.(*FrequencyListItem)
 	newFrequencyValue := currentFrequencyListItem.value + 1
 
-	nextFrequencyListElement := currentFrequencyListElement.Next()
-	nextFrequencyListItem, ok := nextFrequencyListElement.Value.(*FrequencyListItem)
+	var (
+		nextFrequencyListItem *FrequencyListItem
+		ok                    bool
+	)
+	if currentFrequencyListElement.Next() != nil {
+		nextFrequencyListItem, ok = currentFrequencyListElement.Next().Value.(*FrequencyListItem)
+	}
 
 	if !ok || nextFrequencyListItem.value != newFrequencyValue {
 		newFrequencyListItem := &FrequencyListItem{value: newFrequencyValue}
+		newFrequencyListItem.associatedItems = make(map[string]struct{})
 		newFrequencyListItem.associatedItems[key] = struct{}{}
 		c.frequencyList.InsertAfter(newFrequencyListItem, currentFrequencyListElement)
 	} else {
