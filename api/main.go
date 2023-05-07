@@ -12,6 +12,12 @@ func RegisterItemsHandlers(subrouter *mux.Router) {
 	subrouter.HandleFunc("/{key}/", deleteItemHandler).Methods("DELETE")
 }
 
+func RegisterCacheHandlers(subrouter *mux.Router) {
+	subrouter.StrictSlash(true)
+	subrouter.HandleFunc("/", getCacheInfoHandler).Methods("GET")
+	subrouter.HandleFunc("/", purgeCacheHandler).Methods("DELETE")
+}
+
 func RegisterAuthHandlers(subrouter *mux.Router, secret string, key []byte) {
 	subrouter.StrictSlash(true)
 	subrouter.HandleFunc("/token/", createTokenHandler(secret, key)).Methods("POST")

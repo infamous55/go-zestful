@@ -68,6 +68,7 @@ func main() {
 	router := mux.NewRouter()
 	itemsRouter := router.PathPrefix("/items").Subrouter()
 	authRouter := router.PathPrefix("/auth").Subrouter()
+	cacheRouter := router.PathPrefix("/cache").Subrouter()
 	keyValue := randomString(32)
 
 	api.RegisterItemsHandlers(itemsRouter)
@@ -77,6 +78,8 @@ func main() {
 	itemsRouter.Use(authMiddleware)
 
 	api.RegisterAuthHandlers(authRouter, secret, []byte(keyValue))
+
+	api.RegisterCacheHandlers(cacheRouter)
 
 	address := fmt.Sprintf(":%v", port)
 	http.ListenAndServe(address, router)

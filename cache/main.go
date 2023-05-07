@@ -25,6 +25,7 @@ type Cache interface {
 	Delete(key string) (err error)
 	Purge() (err error)
 	DeleteExpired(timeInterval time.Duration)
+	Info() (info map[string]interface{}, err error)
 }
 
 type EvictionPolicy string

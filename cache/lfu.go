@@ -175,3 +175,11 @@ func (c *LFUCache) DeleteExpired(timeInterval time.Duration) {
 		c.Unlock()
 	}
 }
+
+func (c *LFUCache) Info() (info map[string]interface{}, err error) {
+	info = make(map[string]interface{})
+	info["size"] = c.size
+	info["capacity"] = c.capacity
+	info["defaultTtl"] = c.defaultTtl
+	return info, nil
+}
