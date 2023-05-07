@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/infamous55/go-zestful/cache"
@@ -46,5 +48,46 @@ func GenerateAuthMiddleware(key []byte) func(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 			},
 		)
+	}
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	status      int
+	wroteHeader bool
+}
+
+func wrapResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{ResponseWriter: w}
+}
+
+func (rw *responseWriter) Status() int {
+	return rw.status
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	if rw.wroteHeader {
+		return
+	}
+
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
+	rw.wroteHeader = true
+}
+
+func GenerateLoggingMiddleware(logger *log.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				start := time.Now()
+				wrapped := wrapResponseWriter(w)
+				next.ServeHTTP(wrapped, r)
+				logger.Println(
+					"status", wrapped.status,
+					"method", r.Method,
+					"path", r.URL.EscapedPath(),
+					"duration", time.Since(start),
+				)
+			})
 	}
 }

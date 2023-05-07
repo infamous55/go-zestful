@@ -56,8 +56,8 @@ func createTokenHandler(secret string, key []byte) func(w http.ResponseWriter, r
 		// http.SetCookie(w, &cookie)
 
 		response := map[string]string{"token": signedToken}
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	}
 }
@@ -99,8 +99,8 @@ func refreshTokenHandler(secret string, key []byte) func(w http.ResponseWriter, 
 			}
 
 			response := map[string]string{"token": newSignedToken}
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(response)
 		} else {
 			jsonError(w, "invalid token", http.StatusUnauthorized)
