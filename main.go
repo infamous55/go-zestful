@@ -28,37 +28,39 @@ func (p *portNumber) String() string {
 	return fmt.Sprint(*p)
 }
 
-func main() {
-	var capacity uint64
-	var evictionPolicy cache.EvictionPolicy
-	var defaultTtl cache.TimeToLive
-	var secret string
-	var port portNumber
+type options struct {
+	capacity       uint64
+	evictionPolicy cache.EvictionPolicy
+	defaultTtl     cache.TimeToLive
+	secret         string
+	port           portNumber
+}
 
-	flag.Uint64Var(&capacity, "capacity", 0, "set the capacity of the cache")
-	flag.Var(&evictionPolicy, "eviction-policy", "set the eviction policy of the cache (LRU or LFU)")
-	flag.Var(&defaultTtl, "default-ttl", "set the default time-to-live")
-	flag.StringVar(&secret, "secret", "", "set the authorization secret")
-	flag.Var(&port, "port", "set the port number for the web server")
+func parseOptions(opt *options) {
+	flag.Uint64Var(&opt.capacity, "capacity", 0, "set the capacity of the cache")
+	flag.Var(&opt.evictionPolicy, "eviction-policy", "set the eviction policy of the cache (LRU or LFU)")
+	flag.Var(&opt.defaultTtl, "default-ttl", "set the default time-to-live")
+	flag.StringVar(&opt.secret, "secret", "", "set the authorization secret")
+	flag.Var(&opt.port, "port", "set the port number for the web server")
 
 	flag.Parse()
+}
 
-	if capacity == 0 || evictionPolicy == "" || port == 0 {
+func main() {
+	opt := options{}
+	parseOptions(&opt)
+
+	if opt.capacity == 0 || opt.evictionPolicy == "" || opt.port == 0 {
+		flag.Usage()
+		os.Exit(2)
+	}
+	if opt.secret == "" {
+		fmt.Fprint(os.Stderr, "missing value for secret: initialization error\n")
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	if secret == "" {
-		if os.Getenv("ZESTFUL_SECRET") != "" {
-			secret = os.Getenv("ZESTFUL_SECRET")
-		} else {
-			fmt.Fprint(os.Stderr, "missing value for secret: initialization error\n")
-			flag.Usage()
-			os.Exit(2)
-		}
-	}
-
-	newCache, err := cache.New(capacity, evictionPolicy, defaultTtl)
+	newCache, err := cache.New(opt.capacity, opt.evictionPolicy, opt.defaultTtl)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v: initialization error\n", err)
 		os.Exit(2)
@@ -77,10 +79,10 @@ func main() {
 	itemsRouter.Use(cacheMiddleware)
 	itemsRouter.Use(authMiddleware)
 
-	api.RegisterAuthHandlers(authRouter, secret, []byte(keyValue))
+	api.RegisterAuthHandlers(authRouter, opt.secret, []byte(keyValue))
 
 	api.RegisterCacheHandlers(cacheRouter)
 
-	address := fmt.Sprintf(":%v", port)
+	address := fmt.Sprintf(":%v", opt.port)
 	http.ListenAndServe(address, router)
 }
