@@ -76,12 +76,14 @@ func main() {
 	api.RegisterItemsHandlers(itemsRouter)
 	authMiddleware := api.GenerateAuthMiddleware([]byte(keyValue))
 	cacheMiddleware := api.GenerateCacheMiddleware(newCache)
-	itemsRouter.Use(cacheMiddleware)
 	itemsRouter.Use(authMiddleware)
+	itemsRouter.Use(cacheMiddleware)
 
 	api.RegisterAuthHandlers(authRouter, opt.secret, []byte(keyValue))
 
 	api.RegisterCacheHandlers(cacheRouter)
+	cacheRouter.Use(authMiddleware)
+	cacheRouter.Use(cacheMiddleware)
 
 	address := fmt.Sprintf(":%v", opt.port)
 	http.ListenAndServe(address, router)
