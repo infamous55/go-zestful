@@ -14,6 +14,24 @@ import (
 	"github.com/infamous55/go-zestful/cache"
 )
 
+type timeToLive struct {
+	value time.Duration
+	isSet bool
+}
+
+func (ttl *timeToLive) Set(value string) error {
+	result, err := time.ParseDuration(value)
+	if err != nil {
+		return fmt.Errorf("parse error")
+	}
+	ttl = &timeToLive{value: result, isSet: true}
+	return nil
+}
+
+func (ttl *timeToLive) String() string {
+	return fmt.Sprint(ttl.value)
+}
+
 type portNumber uint16
 
 func (p *portNumber) Set(value string) error {
@@ -32,7 +50,7 @@ func (p *portNumber) String() string {
 type options struct {
 	capacity       uint64
 	evictionPolicy cache.EvictionPolicy
-	defaultTtl     cache.TimeToLive
+	defaultTtl     timeToLive
 	secret         string
 	port           portNumber
 }
@@ -61,6 +79,14 @@ func parseOptions() options {
 		opt.evictionPolicy = cache.EvictionPolicy(envEvictionPolicy)
 	}
 
+	envDefaultTtl := os.Getenv("ZESTFUL_DEFAULT_TTL")
+	if !opt.defaultTtl.isSet && envDefaultTtl != "" {
+		defaultTtl, err := time.ParseDuration(envDefaultTtl)
+		if err == nil {
+			opt.defaultTtl.Set(fmt.Sprint(defaultTtl))
+		}
+	}
+
 	envSecret := os.Getenv("ZESTFUL_SECRET")
 	if opt.secret == "" && envSecret != "" {
 		opt.secret = envSecret
@@ -79,7 +105,12 @@ func parseOptions() options {
 		os.Exit(2)
 	}
 	if opt.secret == "" {
-		fmt.Fprint(os.Stderr, "missing value for secret: initialization error\n")
+		fmt.Fprint(os.Stderr, "missing value for secret: parse error\n")
+		flag.Usage()
+		os.Exit(2)
+	}
+	if !opt.defaultTtl.isSet {
+		fmt.Fprint(os.Stderr, "missing value for default-ttl: parse error\n")
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -90,7 +121,7 @@ func parseOptions() options {
 func main() {
 	opt := parseOptions()
 
-	newCache, err := cache.New(opt.capacity, opt.evictionPolicy, opt.defaultTtl)
+	newCache, err := cache.New(opt.capacity, opt.evictionPolicy, opt.defaultTtl.value)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v: initialization error\n", err)
 		os.Exit(2)

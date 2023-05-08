@@ -10,7 +10,7 @@ import (
 type cacheInfo struct {
 	size       uint64
 	capacity   uint64
-	defaultTtl TimeToLive
+	defaultTtl time.Duration
 	sync.RWMutex
 }
 
@@ -49,22 +49,7 @@ func (ep *EvictionPolicy) String() string {
 	return string(*ep)
 }
 
-type TimeToLive time.Duration
-
-func (ttl *TimeToLive) Set(value string) error {
-	result, err := time.ParseDuration(value)
-	if err != nil {
-		return fmt.Errorf("parse error")
-	}
-	*ttl = TimeToLive(result)
-	return nil
-}
-
-func (ttl *TimeToLive) String() string {
-	return fmt.Sprint(*ttl)
-}
-
-func New(capacity uint64, evictionPolicy EvictionPolicy, defaultTtl TimeToLive) (cache Cache, err error) {
+func New(capacity uint64, evictionPolicy EvictionPolicy, defaultTtl time.Duration) (cache Cache, err error) {
 	switch {
 	case evictionPolicy == LRU:
 		return &LRUCache{
