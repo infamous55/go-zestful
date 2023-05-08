@@ -24,7 +24,8 @@ func (ttl *timeToLive) Set(value string) error {
 	if err != nil {
 		return fmt.Errorf("parse error")
 	}
-	ttl = &timeToLive{value: result, isSet: true}
+	ttl.value = result
+	ttl.isSet = true
 	return nil
 }
 
