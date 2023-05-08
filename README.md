@@ -17,7 +17,7 @@ An in-memory key-value store for JSON data written in Golang.
 Make sure you have Go installed on your system, then run the following command:
 
 ```
-$ go get github.com/infamous55/go-zestful
+$ go install github.com/infamous55/go-zestful@v1.0.0-alpha
 ```
 
 ## Usage
