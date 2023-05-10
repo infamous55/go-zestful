@@ -39,7 +39,7 @@ Usage of go-zestful:
         set the authorization secret
 ```
 
-If you don't provide a required property, Go Zestful will also check for SCREAMING*SNAKE_CASE environment variables starting with `ZESTFUL*`(e.g.`ZESTFUL_DEFAULT_TTL`).
+If you don't provide a required property, Go Zestful will also check for SCREAMING_SNAKE_CASE environment variables starting with `ZESTFUL_` (e.g., `ZESTFUL_DEFAULT_TTL`).
 
 After initializing the cache, you can interact with it through the web server. The API supports the following routes:
 
@@ -66,7 +66,7 @@ Example request body:
 ```json
 {
   "key": "example_key",
-  "ttl": "1h", // optional
+  "ttl": "1h",
   "value": "example_value"
 }
 ```
