@@ -1,7 +1,7 @@
 # Go Zestful
 
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/infamous55/go-zestful)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/infamous55/go-zestful)
-![Lines of code](https://img.shields.io/tokei/lines/github/infamous55/go-zestful)
 ![GitHub](https://img.shields.io/github/license/infamous55/go-zestful?color=blue&logoColor=%20)
 
 An in-memory key-value store for JSON data written in Golang.
@@ -39,7 +39,7 @@ Usage of go-zestful:
         set the authorization secret
 ```
 
-If you don't provide a required property, Go Zestful will also check for SCREAMING_SNAKE_CASE environment variables starting with `ZESTFUL_` (e.g. `ZESTFUL_DEFAULT_TTL`).
+If you don't provide a required property, Go Zestful will also check for SCREAMING*SNAKE_CASE environment variables starting with `ZESTFUL*`(e.g.`ZESTFUL_DEFAULT_TTL`).
 
 After initializing the cache, you can interact with it through the web server. The API supports the following routes:
 
@@ -52,6 +52,7 @@ Example request body:
   "secret": "random_string"
 }
 ```
+
 - **POST** `/auth/refresh` for refreshing your JWT right before it expires.
 
 - **GET** `/cache` for getting information about the cache.
@@ -69,6 +70,7 @@ Example request body:
   "value": "example_value"
 }
 ```
+
 - **PUT** `/items/{key}` for updating an existing item's value.
 - **DELETE** `/items/{key}` for deleting an item.
 
